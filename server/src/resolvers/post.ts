@@ -16,19 +16,36 @@ export class PostResolver{
  }
 
  @Mutation(()=> Post)
- async createPost(@Arg("title") title: string,
+ async createPost(
+     @Arg("title") title: string,
      @Ctx() {em}: MyContext): Promise<Post> {
     const post = em.create(Post, {title})
     await em.persistAndFlush(post)
      return post;
+ }
+ @Mutation(()=> Boolean)
+ async deletePost(
+     @Arg("id") id: number,
+     @Ctx() {em}: MyContext): Promise<boolean> {
+    em.nativeDelete(Post, {id})
+     return true;
  }
  @Mutation(()=> Post)
  async updatePost(
      @Arg("title", () => String, {nullable:true}) title: string,
-     @Arg("id") id: string,
-     @Ctx() {em}: MyContext): Promise<Post> {
-    const post = em.create(Post, {title})
-    await em.persistAndFlush(post)
+     @Arg("id") id: number,
+     @Ctx() {em}: MyContext
+     ): Promise<Post | null> {
+    const post = await em.findOne(Post, {id});
+    
+    if (!post){
+        return null
+    }
+    if (typeof title !== 'undefined'){
+        post.title = title;
+        await em.persistAndFlush(post);
+    }
      return post;
- }
-}
+     }
+
+    }
